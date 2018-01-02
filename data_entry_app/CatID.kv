@@ -1,0 +1,297 @@
+#:kivy 1.10.0
+#:import os os
+#:import Factory kivy.factory.Factory
+
+<CatIDScreen>:
+## CatImage is a FloatLayout, so I just have to arrange it within that scope.
+    cat_screen: cat_screen
+    cat_data: cat_data
+    next_button: next_button
+    to_append: [cat_att_1.text, cat_att_2.text, cat_att_3.text, cat_att_4.text]
+    cat_image_list: cat_data.cat_image_list
+    remaining_images: cat_screen.remaining_images
+    CatImage:
+        id: cat_screen
+        size: root.size
+        size_hint: 0.6, 0.6
+        pos: 0.4, 0.4
+        cat_image_list: cat_data.cat_image_list
+    CatData:
+        id: cat_data
+        size: root.size
+        size_hint: 0.6, 0.2
+        pos: 0.0, 0.0
+        reconciler: cat_screen.reconcile_cat_lists
+    BoxLayout:
+        orientation: 'vertical'
+        width: root.width*0.35
+        height:
+            max([cat_att_1.minimum_height,
+            cat_att_2.minimum_height, cat_att_3.minimum_height, cat_att_4.minimum_height, cat_att_5.minimum_height])*5 + self.spacing*4
+        pos: root.width - self.width, (root.height - self.height)/2
+        spacing: 10
+        CatAttribText:
+            id: cat_att_1
+            width: 200
+            focus_next: cat_att_2
+            valid_attributes: ['Domestic Shorthair', 'Domestic Medium Hair', 'Domestic Longhair', 'Siamese', "Balinese", "Bengal", "Oriental Shorthair", "British Shorthair", "British Longhair", "Persian", "Exotic Shorthair", "Rex", "Maine Coon", "Sphinx"]
+            hint_text: self.parent.parent.cat_attribute_list[1]
+        CatAttribText:
+            id: cat_att_2
+            focus_next: cat_att_3
+            valid_attributes: ['White', 'Black', 'Brown', 'Orange', 'Grey', 'Blue', 'Chocolate', 'Silver', 'Buff', 'Cream']  # primary_color
+            hint_text: self.parent.parent.cat_attribute_list[2]
+        CatAttribText:
+            id: cat_att_3
+            focus_next: cat_att_4
+            valid_attributes: ['White', 'Black', 'Brown', 'Orange', 'Grey', 'Blue', 'Chocolate', 'Silver', 'Buff', 'Cream']  # secondary_color
+            hint_text: self.parent.parent.cat_attribute_list[3]
+        CatAttribText:
+            id: cat_att_4
+            focus_next: cat_att_5
+            valid_attributes: ['None', 'White', 'Cream']  # tertiary_color
+            hint_text: self.parent.parent.cat_attribute_list[4]
+        CatAttribText:
+            id: cat_att_5
+            focus_next: next_button
+            valid_attributes: ['Marble', 'Mackerel', 'Ticked', 'Calico', 'Tortoiseshell', 'Point', 'Harlequin', 'Tuxedo', 'Van']  # color_modifier
+            hint_text: self.parent.parent.cat_attribute_list[5]
+    AnchorLayout:
+        size: root.width, root.height
+        anchor_x: 'right'
+        anchor_y: 'bottom'
+        padding: 10
+        TextInput:
+            id: next_button
+            size: 130, 100
+            size_hint: 0.2, 0.2
+            anchor_x: 'right'
+            anchor_y: 'bottom'
+            text: "Hit Enter for Next Cat!"
+            multiline: False
+            hint_text: "Hit Enter for Next Cat!"
+            focus_next: cat_att_1
+            on_text_validate:
+                img_name = os.path.join(cat_screen.last_path, cat_screen.file_name)
+                attribute_list = [img_name, cat_att_1.text, cat_att_2.text, cat_att_3.text, cat_att_4.text, cat_att_5.text]
+                my_test = not cat_data.data_frame['file_name'].str.encode('unicode-escape').isin(
+                [img_name.encode('unicode-escape')]).any()
+                if my_test: cat_data.append(attribute_list)
+                if my_test: cat_data.cat_image_list.append(img_name)
+                try: cat_screen.load_next(cat_screen.last_path, [cat_screen.remaining_images.pop(0)])
+                except IndexError: cat_screen.load_next(cat_screen.last_path, [])
+                self.focus_next.focus = True
+    AnchorLayout:
+        size: root.width, root.height
+        anchor_x: 'right'
+        anchor_y: 'top'
+        padding: 10
+        Button:
+            id: hint_button
+            size: 130, 100
+            size_hint: 0.2, 0.2
+            anchor_x: 'right'
+            anchor_y: 'bottom'
+            text: 'Help Reference'
+            hint_labels: [cat_att_1.hint_text, cat_att_2.hint_text, cat_att_3.hint_text, cat_att_4.hint_text, cat_att_5.hint_text]
+            hint_values: [cat_att_1.valid_attributes, cat_att_2.valid_attributes, cat_att_3.valid_attributes, cat_att_4.valid_attributes, cat_att_5.valid_attributes]
+            on_release: Factory.HintDialog(labels=self.hint_labels, values = self.hint_values).open()
+
+
+<HintDialog>:
+    title: 'Help Reference'
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        Label:
+            text_size: self.size
+            text: 'Attributes are listed in order.\nMake a selection using 1-9, q, w, e, a, s, d.\n' + root.labels[0] + ': ' + ', '.join(root.values[0]) + '\n' + root.labels[1] + ': ' + ', '.join(root.values[1]) + '\n' + root.labels[2] + ': ' + ', '.join(root.values[2]) + '\n' + root.labels[3] + ': ' + ', '.join(root.values[3]) + '\n' + root.labels[4] + ': ' + ', '.join(root.values[4]) + '\n'
+            font_size: 20
+        Button:
+            size_hint_y: None
+            height: 50
+            text: 'press to dismiss'
+            on_release: root.dismiss()
+
+<CatImage>:
+    cat_image: cat_image
+    last_path: os.curdir
+    file_name: ''
+    x_wid: 0.6  ## This keeps our button and picture the same width
+    ## I had been trying to use a box layout, but that wants to fill the whole screen.
+    FloatLayout:
+        ##size: root.height/2, root.width/2
+        ##pos: 0.0, 0.5
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            size_hint_x: root.x_wid
+            height: 30
+            pos: 0.0, root.height-self.height
+            TextInput:
+                multiline: False
+                size_hint_x: 0.9
+                text: self.parent.parent.parent.file_name
+                font_size: 10
+                disabled: True
+            Button:
+                id: last_path
+                size_hint_x: 0.1
+                font_size: 14
+                text: 'Load'
+                on_release: self.parent.parent.parent.show_load()
+        Image:
+            id: cat_image
+            size: root.width, root.height
+            size_hint: root.x_wid, 0.6
+            pos: 0.0, root.height*0.4 - 30
+            source: None
+
+
+<CatData>:
+    last_path: os.curdir
+    file_name: ''
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: .5, None
+        height: 60
+        pos: 0.0, self.height + 10
+
+        TextInput:
+            multiline: False
+            text: self.parent.parent.file_name
+            font_size: 10
+            disabled: True
+        BoxLayout:
+            orientation: 'horizontal'
+            Button:
+                font_size: 14
+                text: 'Load'
+                on_release: self.parent.parent.parent.show_load()
+            Button:
+                font_size: 14
+                text: 'Save'
+                on_release: self.parent.parent.parent.show_save()
+            Button:
+                font_size: 14
+                text: 'New'
+                on_release: self.parent.parent.parent.new()
+            Button:
+                font_size: 14
+                text: 'Change Data Folder'
+                size_hint_x: 1.5
+                on_release: self.parent.parent.parent.show_folder_changer()
+
+
+<CatAttribText>:
+    font_size: 18
+    on_focus: self.text = ''
+
+
+<LoadDialog>:
+
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            path: self.parent.parent.last_path
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: self.parent.parent.parent.cancel()
+
+            Button:
+                text: "Load"
+                on_release:
+                    self.parent.parent.parent.load(filechooser.path, filechooser.selection)
+
+
+<SaveDialog>:
+    text_input: text_input
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            on_selection: text_input.text = self.selection and self.selection[0] or ''
+            path: self.parent.parent.last_path
+
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 30
+            multiline: False
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: self.parent.parent.parent.cancel()
+
+            Button:
+                disabled: self.parent.parent.parent.new_file
+                text: "Save"
+                on_release: self.disabled = self.parent.parent.parent.save(filechooser.path, text_input.text)
+
+            Button:
+                text: "New"
+                on_release: self.parent.parent.parent.new()
+
+
+<FolderChangerDialog>:
+    id: folder_changer_root
+    text_input: text_input
+    depth: depth
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            dirselect: True
+            on_selection: text_input.text = self.selection and (self.selection[0]+'\\'+'\\'.join(folder_changer_root.example_path.split('\\')[-(folder_changer_root.depth_number+1):])) or ''
+            path: folder_changer_root.last_path
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            TextInput:
+                id: text_input
+                size_hint_y: None
+                size_hint_x: 0.8
+                height: 30
+                hint_text: "Example file path"
+                multiline: False
+            TextInput:
+                id: depth
+                size_hint_y: None
+                size_hint_x: 0.2
+                height: 30
+                hint_text: "folder depth (number)"
+                text: '0'
+                multiline: False
+                on_text_validate:
+                    try: folder_changer_root.depth_number = int(self.text)
+                    except ValueError: self.text = str(folder_changer_root.depth_number)
+                on_focus:
+                    try: folder_changer_root.depth_number = int(self.text)
+                    except ValueError: self.text = str(folder_changer_root.depth_number)
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: folder_changer_root.cancel()
+
+            Button:
+                text: "Apply"
+                on_release: folder_changer_root.folder_changer(filechooser.selection[0], folder_changer_root.depth_number)
