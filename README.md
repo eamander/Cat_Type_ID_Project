@@ -9,7 +9,7 @@ You will need a few things on your system to get this working:
 3. pandas 0.20.3+
 
 ### Python 3.5+
-Many tutorials exist on installing Python, e.g. [Anaconda3] (https://conda.io/docs/user-guide/install/download.html).
+Many tutorials exist on installing Python, e.g. [Anaconda3](https://conda.io/docs/user-guide/install/download.html).
 
 ### Kivy
 A comprehensive download and installation guide can be found [here](https://kivy.org/#download).
