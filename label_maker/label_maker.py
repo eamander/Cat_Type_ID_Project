@@ -4,25 +4,32 @@ import os
 import shutil
 
 
-def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=None, train=0.8, test=0.1, val=0.1):
+def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=None, train=0.8, test=0.1, val=0.1,
+                delete_old_files=False):
     """
     Given a DataFrame, source directory, and a target directory, creates folders for each
     label combination in the DataFrame and copies each .jpg into its respective folder
 
-    :param dframe: pandas.DataFrame
-    :param target_dir: str
-    :param source_dir: str
+    :param pandas.DataFrame dframe:
+    :param str target_dir:
+                 Destination directory for the hierarchy of folders specifying the image labels
+    :param str | NoneType source_dir:
         [None] - if not None, the file names are presumed to all reside within the source dir
                  Otherwise, the file names are presumed to be the source dir
-    :param data_col: str
+    :param str | NoneType data_col:
         [None] - if not None, the column label containing the name or location of each image
                  Otherwise, data_col = 'file_name', or dframe.index if no such column exists
-    :param label_cols: list
+    :param list[str] label_cols:
         [None] - if not None, a list of the dframe columns associated with each label category.
                  Otherwise, label_cols = dframe.columns[1:]
-    :param train: float
-    :param test: float
-    :param val: float
+    :param float train:
+        [0.8]  - Fraction (out of 1.0) of images to store as part of the training set
+    :param flaot test:
+        [0.1]  - Fraction (out of 1.0) of images to store as part of the test set
+    :param float val:
+        [0.1]  - Fraction (out of 1.0) of images to store as part of the validation set
+    :param bool delete_old_files:
+        [False] - When set to True, removes any existing images in the folder hierarchy
 
     :return:
 
@@ -71,7 +78,8 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
     for i in ['train', 'validation', 'test']:
         dir_maker(target_dir=os.path.join(target_dir, i),
                   label_cols=label_cols,
-                  label_col_lists=label_col_lists)
+                  label_col_lists=label_col_lists,
+                  delete_old_files=delete_old_files)
 
     rand_arr = np.random.random((len(dframe),))
 
@@ -94,14 +102,15 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
         join_list.append('cat_{}.jpg'.format(i))
 
         dst = os.path.join(dst, *join_list)
-        shutil.copy(src, dst)
+        if not os.path.isfile(dst):
+            shutil.copy(src, dst)
 
     # Find the files referenced in the dataframe and copy them to their new homes!
 
     return target_dir, label_cols
 
 
-def dir_maker(target_dir, label_cols=[], label_col_lists=[]):
+def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=False):
 
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
@@ -109,6 +118,10 @@ def dir_maker(target_dir, label_cols=[], label_col_lists=[]):
     if label_col_lists:
         for label_dir in label_col_lists[0]:
             dir_maker(os.path.join(target_dir, label_dir), label_cols[1:], label_col_lists[1:])
+        return None  # If we end up here, we are not at the bottom of the tree
+    elif delete_old_files:
+        list_of_files = [os.path.join(target_dir, file) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
+        for f in list_of_files:
+            os.unlink(f)
 
     return None
-
