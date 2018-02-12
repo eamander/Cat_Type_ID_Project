@@ -7,8 +7,8 @@ from kivy.properties import ObjectProperty, StringProperty, ListProperty, Boolea
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
 # from kivy.uix.image import Image
-from kivy.factory import Factory
-from kivy.resources import resource_add_path
+# from kivy.factory import Factory
+# from kivy.resources import resource_add_path
 
 import os
 
@@ -255,9 +255,9 @@ class CatIDApp(App):
         return screen
 
 
-Factory.register('CatIDScreen', cls=CatIDScreen)
-Factory.register('CatImage', cls=CatImage)
-Factory.register('LoadDialog', cls=LoadDialog)
+#Factory.register('CatIDScreen', cls=CatIDScreen)
+#Factory.register('CatImage', cls=CatImage)
+#Factory.register('LoadDialog', cls=LoadDialog)
 #Factory.register('SaveDialog', cls=SaveDialog)
 
 if __name__ == '__main__':
