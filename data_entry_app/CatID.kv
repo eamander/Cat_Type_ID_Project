@@ -257,7 +257,9 @@
         FileChooserListView:
             id: filechooser
             dirselect: True
-            on_selection: text_input.text = self.selection and (self.selection[0]+'\\'+'\\'.join(folder_changer_root.example_path.split('\\')[-(folder_changer_root.depth_number+1):])) or ''
+            joiner: folder_changer_root.joiner
+            splitter: folder_changer_root.splitter
+            on_selection: text_input.text = self.selection and (self.selection[0]+self.joiner+self.joiner.join(folder_changer_root.example_path.split(self.splitter)[-(folder_changer_root.depth_number+1):])) or ''
             path: folder_changer_root.last_path
 
         BoxLayout:
