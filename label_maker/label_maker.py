@@ -2,10 +2,13 @@ import pandas as pd
 import numpy as np
 import os
 import shutil
+from sys import platform
+if platform == 'win32':
+    import win32file
 
 
 def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=None, train=0.8, test=0.1, val=0.1,
-                delete_old_files=False):
+                delete_old_files=False, sym_links=False):
     """
     Given a DataFrame, source directory, and a target directory, creates folders for each
     label combination in the DataFrame and copies each .jpg into its respective folder
@@ -30,10 +33,17 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
         [0.1]  - Fraction (out of 1.0) of images to store as part of the validation set
     :param bool delete_old_files:
         [False] - When set to True, removes any existing images in the folder hierarchy
+    :param bool sym_links:
+        CURRENTLY ONLY IMPLEMENTED IN WINDOWSw
+        [False] - When set to True, creates symbolic links to the images rather than copying them
 
     :return:
 
     """
+
+    if platform != 'win32':
+        sym_links = False
+
     dframe = dframe.copy()
 
     if int(train + test + val) != 1:
@@ -103,7 +113,11 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
 
         dst = os.path.join(dst, *join_list)
         if not os.path.isfile(dst):
-            shutil.copy(src, dst)
+            if not sym_links:
+                shutil.copy(src, dst)
+            else:
+                win32file.CreateSymbolicLink(dst, src, 1)
+                # The arguments for the above are opposite shutil.copy on purpose
 
     # Find the files referenced in the dataframe and copy them to their new homes!
 
