@@ -6,6 +6,7 @@ from kivy.uix.textinput import TextInput
 from kivy.properties import ObjectProperty, StringProperty, ListProperty, BooleanProperty, NumericProperty
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
+from sys import platform
 # from kivy.uix.image import Image
 # from kivy.factory import Factory
 # from kivy.resources import resource_add_path
@@ -61,6 +62,11 @@ class FolderChangerDialog(Popup):
     depth_number = NumericProperty(0)
     cancel = ObjectProperty(None)
     last_path = StringProperty('')
+    if platform == 'win32':
+        joiner = StringProperty('\\')  # if Windows
+    else:
+        joiner = StringProperty('/')  # if not windows
+    splitter = StringProperty('')
 
 
 class CatImage(FloatLayout):
@@ -166,9 +172,14 @@ class CatData(FloatLayout):
                                                               columns=globals()['cat_attribute_list']))
 
     def show_folder_changer(self):
+        if '\\' in self.data_frame['file_name'].iloc[0]:
+            splitter = '\\'
+        else:
+            splitter = '/'
         try:
             content = FolderChangerDialog(folder_changer=self.folder_changer, cancel=self.dismiss_popup,
-                                         last_path=self.last_path, example_path=self.data_frame['file_name'].iloc[0])
+                                         last_path=self.last_path, example_path=self.data_frame['file_name'].iloc[0],
+                                          splitter=splitter)
             # content = what shows up in the popup.
             self._popup = Popup(title="Change data folder", content=content,
                                 size_hint=(0.9, 0.9))
@@ -183,8 +194,19 @@ class CatData(FloatLayout):
         # define a function which changes the current folder hierarchy of the recorded data to a new one
         new_beginning = new_folder
 
+        if platform == 'win32':
+            joiner = '\\'  # if Windows
+        else:
+            joiner = '/'  # if not windows
+
         def _inside(series_obj):
-            new_ending = '\\'.join(series_obj['file_name'].split('\\')[-(depth + 1):])
+
+            if '\\' in series_obj['file_name']:
+                splitter = '\\'  # if the df is FROM Windows
+            else:
+                splitter = '/'  # if the df is NOT FROM Windows
+
+            new_ending = joiner.join(series_obj['file_name'].split(splitter)[-(depth + 1):])
             return os.path.join(new_beginning, new_ending)
 
         self.data_frame['file_name'] = self.data_frame.apply(_inside, axis=1)
