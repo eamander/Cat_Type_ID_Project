@@ -27,7 +27,7 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
                  Otherwise, label_cols = dframe.columns[1:]
     :param float train:
         [0.8]  - Fraction (out of 1.0) of images to store as part of the training set
-    :param flaot test:
+    :param float test:
         [0.1]  - Fraction (out of 1.0) of images to store as part of the test set
     :param float val:
         [0.1]  - Fraction (out of 1.0) of images to store as part of the validation set
@@ -37,7 +37,8 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
         CURRENTLY ONLY IMPLEMENTED IN WINDOWSw
         [False] - When set to True, creates symbolic links to the images rather than copying them
 
-    :return:
+    :return str target_dir:
+    :return str label_cols:
 
     """
 
@@ -78,7 +79,7 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
     '''
     Some notes on what I want to do:
     [x] 1. Make a hierarchy of folders at the target_dir representing the labels 
-    [ ] 2. Copy the images from the data directory to their respective label location
+    [x] 2. Copy the images from the data directory to their respective label location
     
     use label_cols, which is sorted, to figure out the folder hierarchy. It will be:
     label_cols[0]\\label_cols[1]\\etc.
