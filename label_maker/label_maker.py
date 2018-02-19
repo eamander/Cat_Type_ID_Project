@@ -3,8 +3,8 @@ import numpy as np
 import os
 import shutil
 from sys import platform
-if platform == 'win32':
-    import win32file
+# if platform == 'win32':
+#     import win32file
 
 
 def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=None, train=0.8, test=0.1, val=0.1,
@@ -17,8 +17,9 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
     :param str target_dir:
                  Destination directory for the hierarchy of folders specifying the image labels
     :param str | NoneType source_dir:
-        [None] - if not None, the file names are presumed to all reside within the source dir
-                 Otherwise, the file names are presumed to be the source dir
+        [None] - if not None, the file names (located in the column indicated by data_col)
+                 are presumed to all reside within the source dir
+                 Otherwise, the file names are presumed to be the path
     :param str | NoneType data_col:
         [None] - if not None, the column label containing the name or location of each image
                  Otherwise, data_col = 'file_name', or dframe.index if no such column exists
@@ -117,7 +118,8 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
             if not sym_links:
                 shutil.copy(src, dst)
             else:
-                win32file.CreateSymbolicLink(dst, src, 1)
+                os.symlink(src, dst)
+                # win32file.CreateSymbolicLink(dst, src, 1)
                 # The arguments for the above are opposite shutil.copy on purpose
 
     # Find the files referenced in the dataframe and copy them to their new homes!
