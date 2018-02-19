@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import shutil
+from keras.backend import floatx
 from sys import platform
 # if platform == 'win32':
 #     import win32file
@@ -35,16 +36,12 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
     :param bool delete_old_files:
         [False] - When set to True, removes any existing images in the folder hierarchy
     :param bool sym_links:
-        CURRENTLY ONLY IMPLEMENTED IN WINDOWSw
         [False] - When set to True, creates symbolic links to the images rather than copying them
 
     :return str target_dir:
     :return str label_cols:
 
     """
-
-    if platform != 'win32':
-        sym_links = False
 
     dframe = dframe.copy()
 
@@ -107,20 +104,19 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
         else:
             dst = os.path.join(target_dir, 'validation')
 
-        join_list = []
+        # join_list = []
         for col in label_cols:
-            join_list.append(row[col])
+            end_path = os.path.join(row[col], 'cat_{}.jpg'.format(i))
+            # join_list.append(row[col])
 
-        join_list.append('cat_{}.jpg'.format(i))
+            # join_list.append('cat_{}.jpg'.format(i))
 
-        dst = os.path.join(dst, *join_list)
-        if not os.path.isfile(dst):
-            if not sym_links:
-                shutil.copy(src, dst)
-            else:
-                os.symlink(src, dst)
-                # win32file.CreateSymbolicLink(dst, src, 1)
-                # The arguments for the above are opposite shutil.copy on purpose
+            new_dst = os.path.join(dst, end_path)  # *join_list)
+            if not os.path.isfile(new_dst):
+                if not sym_links:
+                    shutil.copy(src, new_dst)
+                else:
+                    os.symlink(src, new_dst)
 
     # Find the files referenced in the dataframe and copy them to their new homes!
 
@@ -128,17 +124,100 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
 
 
 def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=False):
+    """
+    Under Construction
+    This makes a set of directories based on labels in DataFrame columns.
 
+    Issues:
+    Multilabel solutions don't currently work correctly because Keras does not have k-hot vector encoding for
+    the flow_from_directory method.
+    flow_from_directory considers the same file / symbolic link in different directories to be different files.
+
+    :param target_dir:
+    :param label_cols:
+    :param label_col_lists:
+    :param delete_old_files:
+
+    :return None:
+    """
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
 
-    if label_col_lists:
-        for label_dir in label_col_lists[0]:
-            dir_maker(os.path.join(target_dir, label_dir), label_cols[1:], label_col_lists[1:])
-        return None  # If we end up here, we are not at the bottom of the tree
-    elif delete_old_files:
-        list_of_files = [os.path.join(target_dir, file) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
-        for f in list_of_files:
-            os.unlink(f)
+    for category in label_col_lists:
+        for label in category:
+            if not os.path.exists(os.path.join(target_dir, label)):
+                os.mkdir(os.path.join(target_dir, label))
+            if delete_old_files:
+                list_of_files = [os.path.join(target_dir, label) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
+                for f in list_of_files:
+                    os.unlink(f)
+
+    # if label_col_lists:
+    #     for label_dir in label_col_lists[0]:
+    #         dir_maker(os.path.join(target_dir, label_dir), label_cols[1:], label_col_lists[1:])
+    #     return None  # If we end up here, we are not at the bottom of the tree
+    # elif delete_old_files:
+    #     list_of_files = [os.path.join(target_dir, file) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
+    #     for f in list_of_files:
+    #         os.unlink(f)
 
     return None
+
+
+# Build k-hot categorical vector dictionary from dataframe
+def k_hot_dict_maker(dframe, data_col=None, label_cols=None):
+    if data_col is None:
+        data_col = 'file_name'
+        if 'file_name' in dframe.columns:
+            pass
+        else:
+            # This lets us use the same formulation for the rest of the function
+            dframe.index.rename(data_col, inplace=True)
+            dframe.reset_index(inplace=True)
+
+    if label_cols is None:
+        # This helps us normalize the organization of the folders.
+        label_cols = dframe.columns.sort_values().tolist()
+        label_cols.remove(data_col)
+        label_cols.sort()
+
+    # push the file_names, which are unique, into the index
+
+    dframe = dframe.set_index(data_col)
+
+    # store a list-like object containing all unique labels for each category
+    labels_arr = np.empty((0,))
+    for col in label_cols:
+        labels_arr = np.append(labels_arr, dframe[col].unique())
+
+    labels_arr = pd.Series(labels_arr).unique()
+    labels_arr.sort()
+
+    label_count = len(labels_arr)
+
+    label_dict = {}
+    for fpath in dframe.index:
+        vect = np.zeros((label_count,), dtype=floatx())
+        label_list = dframe.loc[fpath].tolist()
+        vect[labels_arr.searchsorted(label_list)] += 1
+
+        label_dict[fpath] = vect
+
+    return label_dict
+
+
+# Build decorator for DirectoryIterator._get_batches_of_transformed_samples(self, index_array)
+def multilabel_decorator(func, label_dict):
+
+    def inner(self, index_array):
+        func_return = func(self, index_array)
+        # Build the return array by collecting all of the k-hot encoded vectors from the dict
+        if isinstance(func_return, tuple):
+            batch_x = func_return[0]
+        else:
+            batch_x = func_return
+        batch_y = np.zeros((len(batch_x), self.num_classes), dtype=floatx())
+        for i, j in enumerate(index_array):
+            batch_y[i] = label_dict[self.filenames[j]]
+
+    return inner
