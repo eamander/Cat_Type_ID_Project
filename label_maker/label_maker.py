@@ -9,7 +9,7 @@ from sys import platform
 
 
 def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=None, train=0.8, test=0.1, val=0.1,
-                delete_old_files=False, sym_links=False):
+                delete_old_files=False, sym_links=False, hierarchy='flat'):
     """
     Given a DataFrame, source directory, and a target directory, creates folders for each
     label combination in the DataFrame and copies each .jpg into its respective folder
@@ -37,6 +37,12 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
         [False] - When set to True, removes any existing images in the folder hierarchy
     :param bool sym_links:
         [False] - When set to True, creates symbolic links to the images rather than copying them
+    :param str hierarchy:
+        ['flat']-Options include:
+                   flat: all labels in one folder, multilabel files placed in multiple folders
+                   deep: each value in label_col describes a new depth in the tree.
+                   each value in label_col_lists describes the number of branches at the given depth
+                   none: make the target_dir only, if it does not exist.
 
     :return str target_dir:
     :return str label_cols:
@@ -44,6 +50,8 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
     """
 
     dframe = dframe.copy()
+
+    hierarchy = hierarchy.lower()
 
     if int(train + test + val) != 1:
         raise ValueError("train + test + val must sum to 1")
@@ -88,7 +96,8 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
         dir_maker(target_dir=os.path.join(target_dir, i),
                   label_cols=label_cols,
                   label_col_lists=label_col_lists,
-                  delete_old_files=delete_old_files)
+                  delete_old_files=delete_old_files,
+                  hierarchy=hierarchy)
 
     rand_arr = np.random.random((len(dframe),))
 
@@ -105,25 +114,46 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
             dst = os.path.join(target_dir, 'validation')
 
         # join_list = []
-        for col in label_cols:
-            end_path = os.path.join(row[col], 'cat_{}.jpg'.format(i))
-            # join_list.append(row[col])
+        if hierarchy == 'flat':
+            for col in label_cols:
+                end_path = os.path.join(row[col], 'cat_{}.jpg'.format(i))
+                # join_list.append(row[col])
 
-            # join_list.append('cat_{}.jpg'.format(i))
+                # join_list.append('cat_{}.jpg'.format(i))
 
-            new_dst = os.path.join(dst, end_path)  # *join_list)
+                new_dst = os.path.join(dst, end_path)  # *join_list)
+                if not os.path.isfile(new_dst):
+                    if not sym_links:
+                        shutil.copy(src, new_dst)
+                    else:
+                        os.symlink(src, new_dst)
+        elif hierarchy == 'none':
+            new_dst = dst
             if not os.path.isfile(new_dst):
                 if not sym_links:
                     shutil.copy(src, new_dst)
                 else:
                     os.symlink(src, new_dst)
+        elif hierarchy == 'deep':
+            join_list = []
+            for col in label_cols:
+                join_list.append(row[col])
+
+            join_list.append('cat_{}.jpg'.format(i))
+            new_dst = os.path.join(dst, *join_list)
+            if not os.path.isfile(new_dst):
+                if not sym_links:
+                    shutil.copy(src, new_dst)
+                else:
+                    os.symlink(src, new_dst)
+        else:
+            raise ValueError("Bad value passed to argument 'hierarchy': {}. Use 'flat', 'deep', or 'none' instead.")
 
     # Find the files referenced in the dataframe and copy them to their new homes!
-
     return target_dir, label_cols
 
 
-def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=False):
+def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=False, hierarchy='flat'):
     """
     Under Construction
     This makes a set of directories based on labels in DataFrame columns.
@@ -137,29 +167,44 @@ def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=Fa
     :param label_cols:
     :param label_col_lists:
     :param delete_old_files:
+        [False]         - if True, deletes all .jpg files in the subdirectories listed in label_cols
+                          for safety, this is not implemented for hierarchy='none'
+    :param str hierarchy:
+        ['flat']        - Options include:
+                            flat: all labels in one folder, multilabel files placed in multiple folders
+                            deep: each value in label_col describes a new depth in the tree.
+                                  each value in label_col_lists describes the number of branches at the given depth
+                            none: make the target_dir only, if it does not exist.
 
     :return None:
     """
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
 
-    for category in label_col_lists:
-        for label in category:
-            if not os.path.exists(os.path.join(target_dir, label)):
-                os.mkdir(os.path.join(target_dir, label))
-            if delete_old_files:
-                list_of_files = [os.path.join(target_dir, label) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
-                for f in list_of_files:
-                    os.unlink(f)
+    hierarchy = hierarchy.lower()
 
-    # if label_col_lists:
-    #     for label_dir in label_col_lists[0]:
-    #         dir_maker(os.path.join(target_dir, label_dir), label_cols[1:], label_col_lists[1:])
-    #     return None  # If we end up here, we are not at the bottom of the tree
-    # elif delete_old_files:
-    #     list_of_files = [os.path.join(target_dir, file) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
-    #     for f in list_of_files:
-    #         os.unlink(f)
+    if hierarchy == 'none':
+        return None
+    elif hierarchy == 'flat':
+        for category in label_col_lists:
+            for label in category:
+                if not os.path.exists(os.path.join(target_dir, label)):
+                    os.mkdir(os.path.join(target_dir, label))
+                if delete_old_files:
+                    list_of_files = [os.path.join(target_dir, label) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
+                    for f in list_of_files:
+                        os.unlink(f)
+    elif hierarchy == 'deep':
+        if label_col_lists:
+            for label_dir in label_col_lists[0]:
+                dir_maker(os.path.join(target_dir, label_dir), label_cols[1:], label_col_lists[1:], hierarchy=hierarchy)
+            return None  # If we end up here, we are not at the bottom of the tree
+        elif delete_old_files:
+            list_of_files = [os.path.join(target_dir, file) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
+            for f in list_of_files:
+                os.unlink(f)
+    else:
+        raise ValueError("Bad value passed to argument 'hierarchy': {}. Use 'flat', 'deep', or 'none' instead.")
 
     return None
 
@@ -219,5 +264,7 @@ def multilabel_decorator(func, label_dict):
         batch_y = np.zeros((len(batch_x), self.num_classes), dtype=floatx())
         for i, j in enumerate(index_array):
             batch_y[i] = label_dict[self.filenames[j]]
+
+        return batch_x, batch_y
 
     return inner
