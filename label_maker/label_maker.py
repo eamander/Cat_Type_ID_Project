@@ -102,6 +102,7 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
     rand_arr = np.random.random((len(dframe),))
 
     # Now copy images to the new folders. This does not move the old images
+    new_dframe = dframe.copy()
     for i in range(len(dframe)):
         rand = rand_arr[i]
         row = dframe.iloc[i]
@@ -128,7 +129,8 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
                     else:
                         os.symlink(src, new_dst)
         elif hierarchy == 'none':
-            new_dst = dst
+            end_path = 'cat_{}.jpg'.format(i)
+            new_dst = os.path.join(dst, end_path)
             if not os.path.isfile(new_dst):
                 if not sym_links:
                     shutil.copy(src, new_dst)
@@ -140,7 +142,8 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
                 join_list.append(row[col])
 
             join_list.append('cat_{}.jpg'.format(i))
-            new_dst = os.path.join(dst, *join_list)
+            end_path = os.path.join(*join_list)
+            new_dst = os.path.join(dst, end_path)
             if not os.path.isfile(new_dst):
                 if not sym_links:
                     shutil.copy(src, new_dst)
@@ -148,9 +151,10 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
                     os.symlink(src, new_dst)
         else:
             raise ValueError("Bad value passed to argument 'hierarchy': {}. Use 'flat', 'deep', or 'none' instead.")
+        new_dframe.iloc[i].file_name = end_path
 
     # Find the files referenced in the dataframe and copy them to their new homes!
-    return target_dir, label_cols
+    return target_dir, label_cols, new_dframe
 
 
 def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=False, hierarchy='flat'):
@@ -221,7 +225,6 @@ def k_hot_dict_maker(dframe, data_col=None, label_cols=None):
             dframe.reset_index(inplace=True)
 
     if label_cols is None:
-        # This helps us normalize the organization of the folders.
         label_cols = dframe.columns.sort_values().tolist()
         label_cols.remove(data_col)
         label_cols.sort()
@@ -252,19 +255,33 @@ def k_hot_dict_maker(dframe, data_col=None, label_cols=None):
 
 
 # Build decorator for DirectoryIterator._get_batches_of_transformed_samples(self, index_array)
+# I actually have to decorate ImageDataGenerator.flow_from_directory, which returns a DirectoryIterator.
+# This is not a big change. Just return a DirectoryIterator with its ._get_batches_of_transformed_samples
+# method modified
 def multilabel_decorator(func, label_dict):
+    # Catch the DirectoryIterator returned by func:
+    def inner1(*args, **kwargs):
+        dir_iter = func(*args, **kwargs)
 
-    def inner(self, index_array):
-        func_return = func(self, index_array)
-        # Build the return array by collecting all of the k-hot encoded vectors from the dict
-        if isinstance(func_return, tuple):
-            batch_x = func_return[0]
-        else:
-            batch_x = func_return
-        batch_y = np.zeros((len(batch_x), self.num_classes), dtype=floatx())
-        for i, j in enumerate(index_array):
-            batch_y[i] = label_dict[self.filenames[j]]
+        old_batch_getter = dir_iter._get_batches_of_transformed_samples
 
-        return batch_x, batch_y
+        # Modify dir_iter's method using our label_dict
+        def inner(index_array):
+            func_return = old_batch_getter(index_array)
+            # Build the return array by collecting all of the k-hot encoded vectors from the dict
+            if isinstance(func_return, tuple):
+                batch_x = func_return[0]
+            else:
+                batch_x = func_return
+            batch_y = np.zeros((len(batch_x), dir_iter.num_classes), dtype=floatx())
+            for i, j in enumerate(index_array):
+                batch_y[i] = label_dict[dir_iter.filenames[j]]
 
-    return inner
+            return batch_x, batch_y
+
+        dir_iter._get_batches_of_transformed_samples = inner
+
+        # Return dir_iter, just as before
+        return dir_iter
+
+    return inner1
