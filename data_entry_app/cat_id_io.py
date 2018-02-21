@@ -171,6 +171,9 @@ class CatData(FloatLayout):
         self.data_frame = self.data_frame.append(DataFrame(data=[attribute_list],
                                                               columns=globals()['cat_attribute_list']))
 
+    def overwrite(self, img_name, attribute_list):
+        self.data_frame[self.data_frame.file_name == img_name] = attribute_list
+
     def show_folder_changer(self):
         if '\\' in self.data_frame['file_name'].iloc[0]:
             splitter = '\\'

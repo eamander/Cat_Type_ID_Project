@@ -96,7 +96,26 @@
             hint_labels: [cat_att_1.hint_text, cat_att_2.hint_text, cat_att_3.hint_text, cat_att_4.hint_text, cat_att_5.hint_text]
             hint_values: [cat_att_1.valid_attributes, cat_att_2.valid_attributes, cat_att_3.valid_attributes, cat_att_4.valid_attributes, cat_att_5.valid_attributes]
             on_release: Factory.HintDialog(labels=self.hint_labels, values = self.hint_values).open()
-
+    FloatLayout:
+        size: root.width, root.height
+        padding: 10
+        Button:
+            id: overwrite_button
+            size: 130, 100
+            pos_hint: {'x': 0.55, 'y': 0.018}
+            size_hint: 0.2, 0.2
+            text: 'OVERWRITE \nattributes'
+            focus_next: cat_att_1
+            on_text_validate:  # Obviously this does't go here and needs to be edited
+                img_name = os.path.join(cat_screen.last_path, cat_screen.file_name)  # still correct
+                attribute_list = [img_name, cat_att_1.text, cat_att_2.text, cat_att_3.text, cat_att_4.text, cat_att_5.text]  # still correct
+                my_test = cat_data.data_frame.file_name[cat_data.data_frame.file_name == img_name].any()  # deleted 'not' before this test
+                # instead of making sure it isn't here, let's make sure it IS here! Also greatly simplified this test.
+                if my_test: cat_data.overwrite(img_name, attribute_list)# let's make a new function called 'overwrite' cat_data.append(attribute_list)
+                # if my_test: cat_data.cat_image_list.append(img_name)  # don't need this if it's in our frame already
+                try: # cat_screen.load_next(cat_screen.last_path, [cat_screen.remaining_images.pop(0)])  # don't pop off the next image.
+                except IndexError: cat_screen.load_next(cat_screen.last_path, [])
+                self.focus_next.focus = True
 
 <HintDialog>:
     title: 'Help Reference'
