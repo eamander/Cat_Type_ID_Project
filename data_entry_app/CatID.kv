@@ -106,15 +106,18 @@
             size_hint: 0.2, 0.2
             text: 'OVERWRITE \nattributes'
             focus_next: cat_att_1
-            on_text_validate:  # Obviously this does't go here and needs to be edited
+            on_release:
                 img_name = os.path.join(cat_screen.last_path, cat_screen.file_name)  # still correct
                 attribute_list = [img_name, cat_att_1.text, cat_att_2.text, cat_att_3.text, cat_att_4.text, cat_att_5.text]  # still correct
                 my_test = cat_data.data_frame.file_name[cat_data.data_frame.file_name == img_name].any()  # deleted 'not' before this test
-                # instead of making sure it isn't here, let's make sure it IS here! Also greatly simplified this test.
-                if my_test: cat_data.overwrite(img_name, attribute_list)# let's make a new function called 'overwrite' cat_data.append(attribute_list)
-                # if my_test: cat_data.cat_image_list.append(img_name)  # don't need this if it's in our frame already
-                try: # cat_screen.load_next(cat_screen.last_path, [cat_screen.remaining_images.pop(0)])  # don't pop off the next image.
-                except IndexError: cat_screen.load_next(cat_screen.last_path, [])
+                if my_test: next_cat_attrs = cat_data.overwrite(img_name, attribute_list)# let's make a new function called 'overwrite' cat_data.append(attribute_list)
+                if my_test: cat_screen.load(next_cat_attrs[0])
+                else: cat_screen.load_next(cat_screen.last_path, [])
+                if my_test: cat_att_1.text = next_cat_attrs[1]
+                if my_test: cat_att_2.text = next_cat_attrs[2]
+                if my_test: cat_att_3.text = next_cat_attrs[3]
+                if my_test: cat_att_4.text = next_cat_attrs[4]
+                if my_test: cat_att_5.text = next_cat_attrs[5]
                 self.focus_next.focus = True
 
 <HintDialog>:

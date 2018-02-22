@@ -89,17 +89,22 @@ class CatImage(FloatLayout):
                             size_hint=(0.9, 0.9))
         self._popup.open()
 
-    def load(self, path, filename):
-        self.cat_image.source = os.path.join(path, filename[0])
+    def load(self, path, filename=None):
+        if filename is not None:
+            self.cat_image.source = os.path.join(path, filename[0])
+            self.last_path = path
+            self.file_name = filename[0]
+            all_files = os.listdir(path=path)
+            self.remaining_images = [os.path.join(path, file) for file in all_files if file[-4:] == '.jpg']
+
+            self.reconcile_cat_lists()
+
+            self.dismiss_popup()
+        else:
+            self.cat_image.source = path
+            self.file_name = os.path.split(path)[-1]
+            self.last_path = os.path.join(*os.path.split(path)[:-1])
         self.cat_image.reload()
-        self.last_path = path
-        self.file_name = filename[0]
-        all_files = os.listdir(path=path)
-        self.remaining_images = [os.path.join(path, file) for file in all_files if file[-4:] == '.jpg']
-
-        self.reconcile_cat_lists()
-
-        self.dismiss_popup()
 
     def load_next(self, path, filename):
         try:
@@ -172,7 +177,13 @@ class CatData(FloatLayout):
                                                               columns=globals()['cat_attribute_list']))
 
     def overwrite(self, img_name, attribute_list):
-        self.data_frame[self.data_frame.file_name == img_name] = attribute_list
+        frame_loc = self.data_frame[self.data_frame.file_name == img_name].index[0]
+        self.data_frame.loc[frame_loc] = attribute_list
+        try:
+            next_img_attrs = self.data_frame.shift(-1).loc[frame_loc].values
+        except KeyError:  # I don't think we can throw this exception.
+            next_img_attrs = ['']
+        return next_img_attrs
 
     def show_folder_changer(self):
         if '\\' in self.data_frame['file_name'].iloc[0]:
