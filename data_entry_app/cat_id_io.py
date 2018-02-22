@@ -124,6 +124,12 @@ class CatImage(FloatLayout):
             except ValueError:
                 pass
 
+    def skip(self):
+        try:
+            self.load_next(self.last_path, [self.remaining_images.pop(0)])
+        except IndexError:
+            self.load_next(self.last_path, [])
+
 
 class CatData(FloatLayout):
     last_path = StringProperty('')  # Path to the loaded dataframe, if it exists
@@ -174,11 +180,20 @@ class CatData(FloatLayout):
 
     def append(self, attribute_list):
         self.data_frame = self.data_frame.append(DataFrame(data=[attribute_list],
-                                                              columns=globals()['cat_attribute_list']))
+                                                           columns=globals()['cat_attribute_list']),
+                                                 ignore_index=True)
 
     def overwrite(self, img_name, attribute_list):
         frame_loc = self.data_frame[self.data_frame.file_name == img_name].index[0]
         self.data_frame.loc[frame_loc] = attribute_list
+        try:
+            next_img_attrs = self.data_frame.shift(-1).loc[frame_loc].values
+        except KeyError:  # I don't think we can throw this exception.
+            next_img_attrs = ['']
+        return next_img_attrs
+
+    def skip(self, img_name):
+        frame_loc = self.data_frame[self.data_frame.file_name == img_name].index[0]
         try:
             next_img_attrs = self.data_frame.shift(-1).loc[frame_loc].values
         except KeyError:  # I don't think we can throw this exception.
