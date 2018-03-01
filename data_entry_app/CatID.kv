@@ -174,15 +174,15 @@
             pos: 0.0, root.height-self.height
             TextInput:
                 multiline: False
-                size_hint_x: 0.9
+                size_hint_x: 0.85
                 text: self.parent.parent.parent.file_name
                 font_size: 10
                 disabled: True
             Button:
                 id: last_path
-                size_hint_x: 0.1
+                size_hint_x: 0.15
                 font_size: 14
-                text: 'Load'
+                text: 'Load Img'
                 on_release: self.parent.parent.parent.show_load()
         Image:
             id: cat_image
@@ -210,7 +210,7 @@
             orientation: 'horizontal'
             Button:
                 font_size: 14
-                text: 'Load'
+                text: 'Load Data'
                 on_release: self.parent.parent.parent.show_load()
             Button:
                 font_size: 14
