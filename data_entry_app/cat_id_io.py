@@ -1,4 +1,4 @@
-from pandas import DataFrame, read_pickle
+from pandas import DataFrame, read_pickle, isnull
 from kivy.app import App
 # from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.widget import Widget
@@ -100,10 +100,14 @@ class CatImage(FloatLayout):
             self.reconcile_cat_lists()
 
             self.dismiss_popup()
-        else:
+        elif not isnull(filename):
             self.cat_image.source = path
             self.file_name = os.path.split(path)[-1]
             self.last_path = os.path.join(*os.path.split(path)[:-1])
+        try:
+            self.load_next(self.last_path, [self.remaining_images.pop(0)])
+        except IndexError:
+            self.load_next(self.last_path, [])
         self.cat_image.reload()
 
     def load_next(self, path, filename):
