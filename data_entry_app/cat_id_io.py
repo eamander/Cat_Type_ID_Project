@@ -169,9 +169,12 @@ class CatData(FloatLayout):
                             size_hint=(0.9, 0.9))
         self._popup.open()
 
-    def save(self, path, filename):
+    def save(self, path, filename, mode='pickle'):
         try:
-            self.data_frame.to_pickle(path=os.path.join(path, filename))
+            if mode == 'pickle':
+                self.data_frame.to_pickle(path=os.path.join(path, filename))
+            elif mode == 'csv':
+                self.data_frame.to_csv(path=os.path.join(path, filename))
             self.file_name = os.path.join(path, filename)
         except AttributeError:
             return True
