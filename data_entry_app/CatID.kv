@@ -96,6 +96,48 @@
             hint_labels: [cat_att_1.hint_text, cat_att_2.hint_text, cat_att_3.hint_text, cat_att_4.hint_text, cat_att_5.hint_text]
             hint_values: [cat_att_1.valid_attributes, cat_att_2.valid_attributes, cat_att_3.valid_attributes, cat_att_4.valid_attributes, cat_att_5.valid_attributes]
             on_release: Factory.HintDialog(labels=self.hint_labels, values = self.hint_values).open()
+    FloatLayout:
+        size: root.width, root.height
+        padding: 10
+        Button:
+            id: overwrite_button
+            size: 130, 100
+            pos_hint: {'x': 0.55, 'y': 0.018}
+            size_hint: 0.2, 0.2
+            text: 'OVERWRITE \nattributes'
+            on_release:
+                img_name = os.path.join(cat_screen.last_path, cat_screen.file_name)  # still correct
+                attribute_list = [img_name, cat_att_1.text, cat_att_2.text, cat_att_3.text, cat_att_4.text, cat_att_5.text]  # still correct
+                my_test = cat_data.data_frame.file_name[cat_data.data_frame.file_name == img_name].any()  # deleted 'not' before this test
+                if my_test: next_cat_attrs = cat_data.overwrite(img_name, attribute_list)# let's make a new function called 'overwrite' cat_data.append(attribute_list)
+                if my_test: cat_screen.load(next_cat_attrs[0])
+                else: cat_screen.load_next(cat_screen.last_path, [])
+                if my_test: cat_att_1.text = next_cat_attrs[1]
+                if my_test: cat_att_2.text = next_cat_attrs[2]
+                if my_test: cat_att_3.text = next_cat_attrs[3]
+                if my_test: cat_att_4.text = next_cat_attrs[4]
+                if my_test: cat_att_5.text = next_cat_attrs[5]
+                self.focus_next.focus = True
+        Button:
+            id: skip_button
+            size: 130, 30
+            pos_hint: {'x': 0.55, 'y': 0.25}
+            size_hint: 0.4, 0.05
+            text: 'Skip'
+            on_release:
+                img_name = os.path.join(cat_screen.last_path, cat_screen.file_name)
+                in_dframe = cat_data.data_frame.file_name[cat_data.data_frame.file_name == img_name].any()
+                if not in_dframe: cat_screen.skip()
+                if in_dframe: _subtest = True
+                else: _subtest = False
+                if in_dframe: next_cat_attrs = cat_data.skip(img_name)
+                if in_dframe: cat_screen.load(next_cat_attrs[0])
+                # elif _subtest: cat_screen.load_next(cat_screen.last_path, [])
+                if in_dframe: cat_att_1.text = next_cat_attrs[1]
+                if in_dframe: cat_att_2.text = next_cat_attrs[2]
+                if in_dframe: cat_att_3.text = next_cat_attrs[3]
+                if in_dframe: cat_att_4.text = next_cat_attrs[4]
+                if in_dframe: cat_att_5.text = next_cat_attrs[5]
 
 
 <HintDialog>:
