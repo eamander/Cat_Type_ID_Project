@@ -1,4 +1,4 @@
-from pandas import DataFrame, read_pickle, isnull
+from pandas import DataFrame, read_pickle, read_csv, isnull
 from kivy.app import App
 # from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.widget import Widget
@@ -153,8 +153,11 @@ class CatData(FloatLayout):
                             size_hint=(0.9, 0.9))
         self._popup.open()
 
-    def load(self, path, filename):
-        self.data_frame = read_pickle(filename[0])
+    def load(self, path, filename, mode='pickle'):
+        if mode == 'pickle':
+            self.data_frame = read_pickle(filename[0])
+        elif mode == 'csv':
+            self.data_frame = read_csv(filename[0])
         self.cat_image_list = self.data_frame['file_name'].tolist()
         self.reconciler()
         self.last_path = path
@@ -169,9 +172,12 @@ class CatData(FloatLayout):
                             size_hint=(0.9, 0.9))
         self._popup.open()
 
-    def save(self, path, filename):
+    def save(self, path, filename, mode='pickle'):
         try:
-            self.data_frame.to_pickle(path=os.path.join(path, filename))
+            if mode == 'pickle':
+                self.data_frame.to_pickle(path=os.path.join(path, filename))
+            elif mode == 'csv':
+                self.data_frame.to_csv(path=os.path.join(path, filename))
             self.file_name = os.path.join(path, filename)
         except AttributeError:
             return True

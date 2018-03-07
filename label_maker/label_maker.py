@@ -214,7 +214,10 @@ def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=Fa
 
 
 # Build k-hot categorical vector dictionary from dataframe
-def k_hot_dict_maker(dframe, data_col=None, label_cols=None):
+def k_hot_dict_maker(dframe, data_col=None, label_cols=None, separate_vectors=False, inplace=True):
+    # Avoid modifying the original data frame
+    if not inplace:
+        dframe = dframe.copy()
     if data_col is None:
         data_col = 'file_name'
         if 'file_name' in dframe.columns:
@@ -234,9 +237,19 @@ def k_hot_dict_maker(dframe, data_col=None, label_cols=None):
     dframe = dframe.set_index(data_col)
 
     # store a list-like object containing all unique labels for each category
+    # This is where we might want to split this into multiple columns,
+    # Or store information about their separation
     labels_arr = np.empty((0,))
+    if separate_vectors:
+        indiv_label_count_list = []
+        # Also, in case labels are shared between frames, append col names to each label
+        for col in label_cols:
+            dframe[col] = dframe[col].apply(lambda x: col + "_" + x)
     for col in label_cols:
-        labels_arr = np.append(labels_arr, dframe[col].unique())
+        labels = dframe[col].unique()
+        labels_arr = np.append(labels_arr, labels)
+        if separate_vectors:
+            indiv_label_count_list.append(len(labels))
 
     labels_arr = pd.Series(labels_arr).unique()
     labels_arr.sort()
@@ -248,6 +261,13 @@ def k_hot_dict_maker(dframe, data_col=None, label_cols=None):
         vect = np.zeros((label_count,), dtype=floatx())
         label_list = dframe.loc[fpath].tolist()
         vect[labels_arr.searchsorted(label_list)] += 1
+        if separate_vectors:
+            ind = 0
+            vect_tmp = []
+            for i in indiv_label_count_list:
+                vect_tmp.append(vect[ind:ind + i])
+                ind += i
+            vect = vect_tmp
 
         label_dict[fpath] = vect
 

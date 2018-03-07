@@ -80,6 +80,7 @@
                 if my_test: cat_data.cat_image_list.append(img_name)
                 try: cat_screen.load_next(cat_screen.last_path, [cat_screen.remaining_images.pop(0)])
                 except IndexError: cat_screen.load_next(cat_screen.last_path, [])
+                cat_data.save(cat_data.last_path, "_temp_file.df")
                 self.focus_next.focus = True
     AnchorLayout:
         size: root.width, root.height
@@ -110,6 +111,7 @@
                 attribute_list = [img_name, cat_att_1.text, cat_att_2.text, cat_att_3.text, cat_att_4.text, cat_att_5.text]  # still correct
                 my_test = cat_data.data_frame.file_name[cat_data.data_frame.file_name == img_name].any()  # deleted 'not' before this test
                 if my_test: next_cat_attrs = cat_data.overwrite(img_name, attribute_list)# let's make a new function called 'overwrite' cat_data.append(attribute_list)
+                if my_test: cat_data.save(cat_data.last_path, "_temp_file.df")
                 if my_test: cat_screen.load(next_cat_attrs[0])
                 else: cat_screen.load_next(cat_screen.last_path, [])
                 if my_test: cat_att_1.text = next_cat_attrs[1]
@@ -172,15 +174,15 @@
             pos: 0.0, root.height-self.height
             TextInput:
                 multiline: False
-                size_hint_x: 0.9
+                size_hint_x: 0.85
                 text: self.parent.parent.parent.file_name
                 font_size: 10
                 disabled: True
             Button:
                 id: last_path
-                size_hint_x: 0.1
+                size_hint_x: 0.15
                 font_size: 14
-                text: 'Load'
+                text: 'Load Img'
                 on_release: self.parent.parent.parent.show_load()
         Image:
             id: cat_image
@@ -208,7 +210,7 @@
             orientation: 'horizontal'
             Button:
                 font_size: 14
-                text: 'Load'
+                text: 'Load Data'
                 on_release: self.parent.parent.parent.show_load()
             Button:
                 font_size: 14
