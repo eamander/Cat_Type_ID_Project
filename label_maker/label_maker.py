@@ -305,3 +305,6 @@ def multilabel_decorator(func, label_dict):
         return dir_iter
 
     return inner1
+
+
+# TODO add new decorator or modify old one to handle multi-vector labels.
