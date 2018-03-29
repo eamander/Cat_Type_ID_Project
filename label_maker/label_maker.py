@@ -3,9 +3,6 @@ import numpy as np
 import os
 import shutil
 from keras.backend import floatx
-from sys import platform
-# if platform == 'win32':
-#     import win32file
 
 
 def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=None, train=0.8, test=0.1, val=0.1,
@@ -266,7 +263,7 @@ def k_hot_dict_maker(dframe, data_col=None, label_cols=None, separate_vectors=Fa
             vect_tmp = []
             for i in indiv_label_count_list:
                 vect_tmp.append(vect[ind:ind + i])
-                ind += i
+                ind += i  # increment by count of labels in each col
             vect = vect_tmp
 
         label_dict[fpath] = vect
@@ -307,4 +304,46 @@ def multilabel_decorator(func, label_dict):
     return inner1
 
 
-# TODO add new decorator or modify old one to handle multi-vector labels.
+def refactor_str_column(df, str1, str2, col='file_name', inplace=False):
+    """
+    Takes a column in a dataframe and replaces all instances of str1 with str2
+
+    :param pandas.DataFrame df:
+    :param str col:
+    :param str str1:
+    :param str str2:
+    :param bool inplace:
+        [False]  - If True, perform the action in-place
+                   Note that if this is False, it returns a Series
+
+
+    :return:
+
+    """
+    str1 = str1.replace('\\', '\\\\')
+    str2 = str2.replace('\\', '\\\\')
+
+    return df[col].replace(str1, value=str2, regex=True, inplace=inplace)
+
+
+def rebase_filesystem(df, str1, str2, col='file_name', inplace=False):
+    """
+    refactor path names from one filesystem to another
+
+    :param pandas.DataFrame df:
+    :param str str1:
+    :param str str2:
+    :param str col:
+    :param bool inplace:
+
+
+    :return:
+    """
+
+    if not inplace:
+        df = df.copy()
+
+    refactor_str_column(df, str1, str2, col, inplace=True)
+    df[col].apply(os.path.normpath, inplace=True)
+
+    return df
