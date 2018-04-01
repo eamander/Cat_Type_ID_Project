@@ -351,7 +351,8 @@ def rebase_filesystem(df, str1, str2, sep1='\\', sep2='\\', col='file_name', inp
     sep2 = sep2.replace('\\', '\\\\')
 
     refactor_str_column(df, str1, str2, col, inplace=True)
-    df[col].replace(sep1, value=sep2, regex=True, inplace=True)
+    if sep1 != sep2:
+        df[col].replace(sep1, value=sep2, regex=True, inplace=True)
     df[col] = df[col].apply(os.path.normpath)
 
     return df
