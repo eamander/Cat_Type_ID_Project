@@ -326,14 +326,17 @@ def refactor_str_column(df, str1, str2, col='file_name', inplace=False):
     return df[col].replace(str1, value=str2, regex=True, inplace=inplace)
 
 
-def rebase_filesystem(df, str1, str2, col='file_name', inplace=False):
+def rebase_filesystem(df, str1, str2, sep1='\\', sep2='\\', col='file_name', inplace=False):
     """
     refactor path names from one filesystem to another. All instances of
-    str1 are replaced with str2.
+    str1 are replaced with str2. sep1 is the separator used in the filesystem
+    of str1, and sep2 the separator for the filesystem of str2.
 
     :param pandas.DataFrame df:
     :param str str1:
     :param str str2:
+    :param str sep1:
+    :param str sep2:
     :param str col:
     :param bool inplace:
 
@@ -344,7 +347,11 @@ def rebase_filesystem(df, str1, str2, col='file_name', inplace=False):
     if not inplace:
         df = df.copy()
 
+    sep1 = sep1.replace('\\', '\\\\')
+    sep2 = sep2.replace('\\', '\\\\')
+
     refactor_str_column(df, str1, str2, col, inplace=True)
+    df[col].replace(sep1, value=sep2, regex=True, inplace=True)
     df[col] = df[col].apply(os.path.normpath)
 
     return df
