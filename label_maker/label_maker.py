@@ -328,7 +328,8 @@ def refactor_str_column(df, str1, str2, col='file_name', inplace=False):
 
 def rebase_filesystem(df, str1, str2, col='file_name', inplace=False):
     """
-    refactor path names from one filesystem to another
+    refactor path names from one filesystem to another. All instances of
+    str1 are replaced with str2.
 
     :param pandas.DataFrame df:
     :param str str1:
@@ -344,6 +345,6 @@ def rebase_filesystem(df, str1, str2, col='file_name', inplace=False):
         df = df.copy()
 
     refactor_str_column(df, str1, str2, col, inplace=True)
-    df[col].apply(os.path.normpath, inplace=True)
+    df[col] = df[col].apply(os.path.normpath)
 
     return df
