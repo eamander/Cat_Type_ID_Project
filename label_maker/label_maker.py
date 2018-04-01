@@ -43,6 +43,7 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
 
     :return str target_dir:
     :return str label_cols:
+    :return pandas.DataFrame new_dframe:
 
     """
 
@@ -192,7 +193,8 @@ def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=Fa
                 if not os.path.exists(os.path.join(target_dir, label)):
                     os.mkdir(os.path.join(target_dir, label))
                 if delete_old_files:
-                    list_of_files = [os.path.join(target_dir, label) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
+                    list_of_files = [os.path.join(target_dir, label)
+                                     for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
                     for f in list_of_files:
                         os.unlink(f)
     elif hierarchy == 'deep':
@@ -211,7 +213,7 @@ def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=Fa
 
 
 # Build k-hot categorical vector dictionary from dataframe
-def k_hot_dict_maker(dframe, data_col=None, label_cols=None, separate_vectors=False, inplace=True):
+def k_hot_dict_maker(dframe, data_col=None, label_cols=None, separate_vectors=False, uniqueify=True, inplace=True):
     # Avoid modifying the original data frame
     if not inplace:
         dframe = dframe.copy()
@@ -232,6 +234,10 @@ def k_hot_dict_maker(dframe, data_col=None, label_cols=None, separate_vectors=Fa
     # push the file_names, which are unique, into the index
 
     dframe = dframe.set_index(data_col)
+
+    if uniqueify:
+        for col in label_cols:
+            dframe[col] = dframe[col].apply(lambda s: col + '_' + s)
 
     # store a list-like object containing all unique labels for each category
     # This is where we might want to split this into multiple columns,
