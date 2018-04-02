@@ -59,9 +59,10 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
     if data_col is None:
         data_col = 'file_name'
         if 'file_name' in dframe.columns:
-            pass
+            dframe.reset_index(inplace=True, drop=True)
         else:
             # This lets us use the same formulation for the rest of the function
+            # by renaming the index and moving it into the columns
             dframe.index.rename(data_col, inplace=True)
             dframe.reset_index(inplace=True)
 
@@ -149,7 +150,7 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
                     os.symlink(src, new_dst)
         else:
             raise ValueError("Bad value passed to argument 'hierarchy': {}. Use 'flat', 'deep', or 'none' instead.")
-        new_dframe.iloc[i].file_name = end_path
+        new_dframe.loc[i, data_col] = end_path
 
     # Find the files referenced in the dataframe and copy them to their new homes!
     return target_dir, label_cols, new_dframe
