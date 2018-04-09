@@ -3,9 +3,6 @@ import numpy as np
 import os
 import shutil
 from keras.backend import floatx
-from sys import platform
-# if platform == 'win32':
-#     import win32file
 
 
 def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=None, train=0.8, test=0.1, val=0.1,
@@ -46,6 +43,7 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
 
     :return str target_dir:
     :return str label_cols:
+    :return pandas.DataFrame new_dframe:
 
     """
 
@@ -61,9 +59,10 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
     if data_col is None:
         data_col = 'file_name'
         if 'file_name' in dframe.columns:
-            pass
+            dframe.reset_index(inplace=True, drop=True)
         else:
             # This lets us use the same formulation for the rest of the function
+            # by renaming the index and moving it into the columns
             dframe.index.rename(data_col, inplace=True)
             dframe.reset_index(inplace=True)
 
@@ -151,7 +150,7 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
                     os.symlink(src, new_dst)
         else:
             raise ValueError("Bad value passed to argument 'hierarchy': {}. Use 'flat', 'deep', or 'none' instead.")
-        new_dframe.iloc[i].file_name = end_path
+        new_dframe.loc[i, data_col] = end_path
 
     # Find the files referenced in the dataframe and copy them to their new homes!
     return target_dir, label_cols, new_dframe
@@ -195,7 +194,8 @@ def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=Fa
                 if not os.path.exists(os.path.join(target_dir, label)):
                     os.mkdir(os.path.join(target_dir, label))
                 if delete_old_files:
-                    list_of_files = [os.path.join(target_dir, label) for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
+                    list_of_files = [os.path.join(target_dir, label)
+                                     for file in os.listdir(target_dir) if file[-4:] == ".jpg"]
                     for f in list_of_files:
                         os.unlink(f)
     elif hierarchy == 'deep':
@@ -214,7 +214,7 @@ def dir_maker(target_dir, label_cols=[], label_col_lists=[], delete_old_files=Fa
 
 
 # Build k-hot categorical vector dictionary from dataframe
-def k_hot_dict_maker(dframe, data_col=None, label_cols=None, separate_vectors=False, inplace=True):
+def k_hot_dict_maker(dframe, data_col=None, label_cols=None, separate_vectors=False, uniqueify=True, inplace=True):
     # Avoid modifying the original data frame
     if not inplace:
         dframe = dframe.copy()
@@ -235,6 +235,10 @@ def k_hot_dict_maker(dframe, data_col=None, label_cols=None, separate_vectors=Fa
     # push the file_names, which are unique, into the index
 
     dframe = dframe.set_index(data_col)
+
+    if uniqueify:
+        for col in label_cols:
+            dframe[col] = dframe[col].apply(lambda s: col + '_' + s)
 
     # store a list-like object containing all unique labels for each category
     # This is where we might want to split this into multiple columns,
@@ -266,7 +270,7 @@ def k_hot_dict_maker(dframe, data_col=None, label_cols=None, separate_vectors=Fa
             vect_tmp = []
             for i in indiv_label_count_list:
                 vect_tmp.append(vect[ind:ind + i])
-                ind += i
+                ind += i  # increment by count of labels in each col
             vect = vect_tmp
 
         label_dict[fpath] = vect
@@ -307,4 +311,55 @@ def multilabel_decorator(func, label_dict):
     return inner1
 
 
-# TODO add new decorator or modify old one to handle multi-vector labels.
+def refactor_str_column(df, str1, str2, col='file_name', inplace=False):
+    """
+    Takes a column in a dataframe and replaces all instances of str1 with str2
+
+    :param pandas.DataFrame df:
+    :param str col:
+    :param str str1:
+    :param str str2:
+    :param bool inplace:
+        [False]  - If True, perform the action in-place
+                   Note that if this is False, it returns a Series
+
+
+    :return:
+
+    """
+    str1 = str1.replace('\\', '\\\\')
+    str2 = str2.replace('\\', '\\\\')
+
+    return df[col].replace(str1, value=str2, regex=True, inplace=inplace)
+
+
+def rebase_filesystem(df, str1, str2, sep1='\\', sep2='\\', col='file_name', inplace=False):
+    """
+    refactor path names from one filesystem to another. All instances of
+    str1 are replaced with str2. sep1 is the separator used in the filesystem
+    of str1, and sep2 the separator for the filesystem of str2.
+
+    :param pandas.DataFrame df:
+    :param str str1:
+    :param str str2:
+    :param str sep1:
+    :param str sep2:
+    :param str col:
+    :param bool inplace:
+
+
+    :return:
+    """
+
+    if not inplace:
+        df = df.copy()
+
+    sep1 = sep1.replace('\\', '\\\\')
+    sep2 = sep2.replace('\\', '\\\\')
+
+    refactor_str_column(df, str1, str2, col, inplace=True)
+    if sep1 != sep2:
+        df[col].replace(sep1, value=sep2, regex=True, inplace=True)
+    df[col] = df[col].apply(os.path.normpath)
+
+    return df
