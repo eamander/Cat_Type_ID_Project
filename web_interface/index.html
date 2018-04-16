@@ -65,9 +65,17 @@
 
         .rcorners{
             border-radius: 1vw;
+            color: #00D207;
             background: #00B806;
             padding: 1vw;
             position: relative;
+        }
+        .rcorners.data{
+            animate-effect: fadeIn;
+        }
+        .rcorners:hover, .rcorners:active, .rcorners:focus {
+            color: none !important;
+            outline: none !important;
         }
 
         .imground{
@@ -160,24 +168,27 @@
                                     <!--TODO: make image url input and button input do something-->
                                     <!--TODO: add text field -->
                                     <input type="file" id="myFile">
-                                    <span class="btn btn-primary btn-lg btn-block">Upload an Image</span>
+                                    <span id="image_upload_button" class="btn btn-primary btn-lg btn-block">Upload an Image</span>
                                     <br>
-                                    <h2 class="gtco-center text-center">-OR-</h2>
                                 </label>
                             <!--</p>-->
+                            <h2 class="gtco-center text-center">-OR-</h2>
+                            <br>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12">
-                            <input class="col-md-12" type="text" name="imgURL" value="Input image URL here!">
+                            <input id="img_url_input" class="col-md-12" type="text" name="imgURL" value="Input image URL here!">
+                            <br>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 animate-box rcorners" data-animate-effect="fadeInRight">
-                    <div class="col-md-12 animate-box rcorners">
+                <div class="col-md-6 animate-box" data-animate-effect="fadeInRight">
+                    <!--TODO: Make this fade in / out-->
+                    <br>
+                    <div id="disp_img_border" class="col-md-12 btn-block btn-primary btn-lg fadeIn rcorners item-animate" data-animate-effect="fadeIn"> <!--onresize="changeDispBkgdSize()">-->
                         <!--TODO: change alt text-->
-                        <!--TODO: make border heights match-->
-                        <img src="images/dmh_277.jpg" alt="Cat Image Goes Here" class="img-responsive feature-center imground">
+                        <!--<img id="disp_img" src="images/dmh_277.jpg" alt="Cat Image Goes Here" class="img-responsive center-block imground">-->
                     </div>
                 </div>
             </div>
@@ -629,6 +640,23 @@
 <script src="js/magnific-popup-options.js"></script>
 <!-- Main -->
 <script src="js/main.js"></script>
+<script src="js/p5.js"></script>
+<script src="js/p5.dom.js"></script>
+
+<script src="js/felindex_adj.js"></script>
+
+<script>
+    function changeSize(target_elem, source_elem){
+        var s_elem = document.getElementById(source_elem);
+        var t_elem = document.getElementById(target_elem);
+        t_elem.clientWidth = s_elem.clientWidth + 20;
+        t_elem.clientHeight = s_elem.clientHeight + 20;
+    }
+
+//    function changeDispBkgdSize(){
+//        changeSize("disp_img_border", "disp_img");
+//    }
+</script>
 
 </body>
 </html>
