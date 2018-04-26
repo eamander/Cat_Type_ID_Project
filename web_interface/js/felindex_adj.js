@@ -1,57 +1,27 @@
 var image_zone;
 var image_upload_button;
 var image_link_zone;
-var test_var;
+var img_file;
 var img;
 var img_data;
-//function setup(){
-////    special p5 func that is called to setup the page
-//  
-//    image_zone = select('#disp_img');  // The image element
-//    image_upload_button = select('#image_upload_button');
-//    image_link_zone = select('#img_url_input');
-//    
-//    image_zone.drop(gotFile);
-//    image_upload_button.drop(gotFile);
-//    image_link_zone.drop(gotFile);
-//
-//    // image_zone:
-////    do any pre-processing to
-//};
-//
-//// In getImage, get the image, then send it.
-//
-//function gotFile(file){
-//    // Start by naing it just load at the right place
-//    test_var = file;
-//    // OK so get image data, find the source, use that.
-//    createP(file.name + " " + file.size);
-//    var img = createImg(file.data);
-//}
-
-
+var testCheck1;
+var testCheck2;
+var testCheck3;
 
 
 // new construction
 var sketch = function(p){
-//    var img;
-//    p.preload = function(){
-////        var img;
-//        img = p.loadImage("images/dmh_277.jpg");
-//        img.addClass("img-responsive center-block imground");
-//    };
-    
-    
+  
     p.setup = function(){
     //    special p5 func that is called to setup the page
 
 //        image_zone = p.select('#disp_img');  // The image element
         image_upload_button = p.select('#image_upload_button');
-        image_link_zone = p.select('#img_url_input');
+//        image_link_zone = p.select('#img_url_input');
 
 //        image_zone.drop(gotFile);
         image_upload_button.drop(gotFile);
-        image_link_zone.drop(gotFile);
+//        image_link_zone.drop(gotFile);
 
         // image_zone:
     //    do any pre-processing to
@@ -63,24 +33,44 @@ var sketch = function(p){
 };
 
     function gotFile(file){
-        // Start by naing it just load at the right place
 //        p.removeElements();
         var elem = document.getElementById("disp_img");
         elem.parentNode.removeChild(elem);
         
-        test_var = file;
+        img_file = file;
         // OK so get image data, find the source, use that.
         img = p.createImg(file.data);
         img.addClass("img-responsive center-block imground");
         img.attribute('id', 'disp_img');
         image_zone = p.select('#disp_img');
         image_zone.drop(gotFile);
-        img_data = p.loadImage(file.data);
-        img_data.loadPixels();
+        
         // access pixels by: img_Data.pixels
         // try sending this array
         // can also try sending string repr and parsing
-};
+    
+        function loadPixCallback(the_img){
+            // the_img.loadPixels();
+            // Here, send the file data to the algorithm
+            var input = {data: img_file.data};
+            client.algo('algo://eamander/Felindex/')
+                  .pipe(JSON.stringify(input))
+                  .then(function(output) {
+                      testCheck1 = output;
+                      output = JSON.parse(output.result);
+                      radarInputData = make_all_data(output.data[0]); 
+                      testCheck2 = radarInputData;
+                      imageLabels = output.labels[0];
+                      testCheck3 = imageLabels;
+                      // Then redraw the plots
+                      drawCharts(radarInputData);
+                      // Then change the labels:
+                      changeLabels(imageLabels);
+                  });
+        };
+        
+        img_data = p.loadImage(file.data, loadPixCallback);
+    };
 };
 
 // reference: <!--<img id="disp_img" src="images/dmh_277.jpg" alt="Cat Image Goes Here" class="img-responsive center-block imground">-->

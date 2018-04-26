@@ -31,7 +31,9 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
     :param float val:
         [0.1]  - Fraction (out of 1.0) of images to store as part of the validation set
     :param bool delete_old_files:
-        [False] - When set to True, removes any existing images in the folder hierarchy
+        [False] - While false, adds all images in the input dframe regardless of presence, and starts
+                    the file numbering index at 1+ the highest number in the existing target directory.
+                  When set to True, removes any existing images in the folder hierarchy
     :param bool sym_links:
         [False] - When set to True, creates symbolic links to the images rather than copying them
     :param str hierarchy:
@@ -102,7 +104,16 @@ def label_maker(dframe, target_dir, source_dir=None, data_col=None, label_cols=N
 
     # Now copy images to the new folders. This does not move the old images
     new_dframe = dframe.copy()
-    for i in range(len(dframe)):
+
+    # if we are picking up where we left off, find the starting index.
+    if not delete_old_files:
+        dirs = [os.path.join(target_dir, dir) for dir in ['train', 'validation', 'test']]
+        start_index = [[].extend(os.listdir(path)) for path in dirs][0]
+        start_index = max([int(name.split('_')[1].split('.')[0]) for name in start_index]) + 1
+    else:
+        start_index = 0
+    for j in range(len(dframe)):
+        i = j + start_index
         rand = rand_arr[i]
         row = dframe.iloc[i]
         src = row[data_col]

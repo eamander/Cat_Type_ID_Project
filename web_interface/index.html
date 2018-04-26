@@ -4,6 +4,10 @@
 	Twitter: http://twitter.com/gettemplateco
 	URL: http://gettemplates.co
 -->
+
+<!--NOT IMPLEMENTED: loading image by link.
+    TODO: Implement loading image as a link
+-->
 <html>
 <head>
     <meta charset="utf-8">
@@ -52,6 +56,9 @@
     <!--[if lt IE 9]>
     <script src="js/respond.min.js"></script>
     <![endif]-->
+    <!-- d3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js" charset="utf-8"></script>
+    
     <style>
         .upload_button {
           display: inline-block;
@@ -172,13 +179,13 @@
                                     <br>
                                 </label>
                             <!--</p>-->
-                            <h2 class="gtco-center text-center">-OR-</h2>
-                            <br>
+<!--                            <h2 class="gtco-center text-center">-OR-</h2>
+                            <br>-->
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12">
-                            <input id="img_url_input" class="col-md-12" type="text" name="imgURL" value="Input image URL here!">
+<!--                            <input id="img_url_input" class="col-md-12" type="text" name="imgURL" value="Input image URL here!">-->
                             <br>
                         </div>
                     </div>
@@ -190,6 +197,36 @@
                         <!--TODO: change alt text-->
                         <!--<img id="disp_img" src="images/dmh_277.jpg" alt="Cat Image Goes Here" class="img-responsive center-block imground">-->
                     </div>
+                </div>
+            </div>
+            <br>
+            <div class="row">
+                <!-- 
+                    Do Breed on one line, Colors on the second, Pattern on the third
+                    OR Breed + pattern, then colors.
+                -->
+                <div class="col-md-6 breed_div text-center">
+                    <h3>Breed: <font id='breed_text' class='basic-em'>TBD</font></h3>
+                    <!--TODO: input breed display -->
+                </div>
+                <div class="col-md-6 color_mod_div text-center">
+                    <h3>Coat Pattern: <font id='color_mod_text' class='basic-em'>TBD</font></h3>
+                    <!--TODO: input coat pattern display -->
+                </div>
+            </div>
+            <br>
+            <div class="row">
+                <div class="col-md-4 p_color_div text-center">
+                    <h3>Primary Color: <font id='pcolor_text' class='basic-em'>TBD</font></h3>
+                    <!--TODO: input primary_color -->
+                </div>
+                <div class="col-md-4 s_color_div text-center">
+                    <h3>Secondary Color: <font id='scolor_text' class='basic-em'>TBD</font></h3>
+                    <!--TODO: input secondary_color -->
+                </div>
+                <div class="col-md-4 t_color_div text-center">
+                    <h3>Tertiary Color: <font id='tcolor_text' class='basic-em'>TBD</font></h3>
+                    <!--TODO: input tertiary_color -->
                 </div>
             </div>
 
@@ -640,10 +677,12 @@
 <script src="js/magnific-popup-options.js"></script>
 <!-- Main -->
 <script src="js/main.js"></script>
-<script src="js/p5.js"></script>
+<script src="js/p5.min.js"></script>
 <script src="js/p5.dom.js"></script>
 
+<script src="https://algorithmia.com/v1/clients/js/algorithmia-0.2.0.js"></script>
 <script src="js/felindex_adj.js"></script>
+<script src="js/attr_radio_factory.js"></script>
 
 <script>
     function changeSize(target_elem, source_elem){
@@ -656,6 +695,96 @@
 //    function changeDispBkgdSize(){
 //        changeSize("disp_img_border", "disp_img");
 //    }
+</script>
+
+<script>
+    /* Radar chart design created by Nadieh Bremer - VisualCinnamon.com */
+    
+            ////////////////////////////////////////////////////////////// 
+            //////////////////////// Set-Up Charts /////////////////////// 
+            ////////////////////////////////////////////////////////////// 
+    // Actually let's not resize the chart. We want it to move elements around
+    // instead
+    var elemWidth = document.getElementsByClassName('p_color_div')[0].clientWidth;
+    var margin = {top: 60, right: 60, bottom: 60, left: 60},
+            width = Math.min(1300, elemWidth - 10  
+                ) - margin.left - margin.right,
+            height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+    
+            ////////////////////////////////////////////////////////////// 
+            /////////////////////// Default Data ///////////////////////// 
+            ////////////////////////////////////////////////////////////// 
+   
+   var defaultOutputData = {
+    data: 
+        [
+        [[1.13926462e-05, 8.68367079e-06, 8.26331132e-07, 1.59706397e-05,
+          1.28094871e-06, 8.16249212e-06, 1.85813533e-05, 9.99226213e-01,
+          3.42013223e-11, 1.31673750e-09, 6.57270949e-09, 1.21247490e-06,
+          1.59436837e-03, 5.20634300e-11],  // breed
+         [3.30719538e-02, 1.91006126e-04, 2.54796177e-01, 3.85732704e-07, 
+          5.32508068e-07, 5.23587980e-04, 1.03593586e-04, 8.00433372e-06, 
+          1.22029756e-04, 3.83108500e-06, 3.03483461e-07, 6.09460659e-03],  // primary color
+         [4.60445508e-02, 4.22135054e-05, 1.87077720e-04, 4.58464725e-04, 
+          1.85622059e-06, 8.04826959e-06, 1.70212354e-06, 1.66630698e-03, 
+          3.57059122e-04, 5.10020733e-01],  // secondary color
+         [8.04108353e-08, 8.12432826e-01, 1.10851765e-01], // tertiary color
+         [9.85803083e-03, 4.14875001e-01, 1.71420776e-04, 2.18738501e-06, 
+         11.24368069e-06, 2.59835250e-03, 7.92833998e-06, 2.26111342e-06, 
+          9.63576313e-04, 6.42023133e-06, 1.81576668e-03, 2.49828048e-07]]  // color modifier (e.g. pattern)
+    ],
+    labels:
+        [
+        ['Domestic Shorthair', 'Brown', 'White', 'None', 'Harlequin']
+    ]
+    };
+    
+    // Make all the data
+    // This is only going to happen for the FIRST image!
+    // We might want to think about how to combine multiple images as well.
+    
+    var radarInputData = make_all_data(defaultOutputData.data[0]);
+    var imageLabels = defaultOutputData.labels[0];
+    
+    ////////////////////////////////////////////////////////////// 
+    //////////////////// Draw the Chart ////////////////////////// 
+    ////////////////////////////////////////////////////////////// 
+    var color = d3.scaleOrdinal()
+            .range(["#00B806"]);
+
+    var radarChartOptions = {
+        w: width,
+        h: height,
+        margin: margin,
+        maxValue: 1.0,
+        levels: 5,
+        roundStrokes: true,
+        color: color,
+        labelFactor: 10
+    };
+    //Call function to draw the Radar chart for each div
+    var div_arr = [".breed_div", 
+                   ".p_color_div", ".s_color_div", ".t_color_div",
+                   ".color_mod_div"];
+    var text_id_arr = ["breed_text", "pcolor_text", 
+                       "scolor_text", "tcolor_text", "color_mod_text"];
+    function drawCharts(radarInput) {
+        var i;
+        for (i = 0; i < div_arr.length; i++ ) {
+            RadarChart(div_arr[i], radarInput[i], radarChartOptions);
+        };
+    };
+    
+    function changeLabels(imageLabels) {
+        var i;
+        for (i = 0; i < text_id_arr.length; i++) {
+            document.getElementById(text_id_arr[i]).innerText = imageLabels[i];
+        };
+    };
+    
+    drawCharts(radarInputData);
+    changeLabels(imageLabels);
+    
 </script>
 
 </body>
