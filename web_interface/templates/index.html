@@ -120,7 +120,7 @@
         </div>
     </nav>
 
-    <div id="gtco-header" data-section="home" class="gtco-cover header-fixed" role="banner" style="background-image:url(images/img_bg_3.jpg);">
+    <div id="gtco-header" data-section="home" class="gtco-cover header-fixed" role="banner" style="background-image:url(images/felindexcover1.jpg);">
         <div class="overlay"></div>
         <div class="gtco-container">
             <div class="row">
@@ -148,7 +148,7 @@
                 <div class="col-md-6">
                     <div class="gtco-heading">
                         <h2 class="gtco-left">ID a cat!</h2>
-                        <p>Short Description: E.G. Upload or link an image of a cat and see its attributes!</p>
+                        <p>Upload an image of a cat and see its attributes below!</p>
                     </div>
 
                     <div class="row">
@@ -158,9 +158,10 @@
                                     <h3>Instructions</h3>
                                     <p>
                                         Use the button to upload an image from your computer,
-                                        or enter the URL to an image in the box below. The neural network will
-                                        then display your image, and its predictions for the attributes of the cat
-                                        below.
+                                        or drag an image onto the cat image already displayed. The neural network will
+                                        then display a prediction for your cat's attributes based on the image. Output below 
+                                        is in a log scale (the outer ring is 100% confidence, the second ring is 10%, 
+                                        the third is 1% etc).
                                     </p>
                                 <!--</div>-->
                             </div>
@@ -642,12 +643,12 @@
                         <small class="block">Designed by <a href="http://gettemplates.co/" target="_blank">GetTemplates.co</a> Demo Images: <a href="http://unsplash.co/" target="_blank">Unsplash</a></small>
                     </p>
                     <p class="pull-right">
-                    <ul class="gtco-social-icons pull-right">
-                        <li><a href="#"><i class="icon-twitter"></i></a></li>
-                        <li><a href="#"><i class="icon-facebook"></i></a></li>
-                        <li><a href="#"><i class="icon-linkedin"></i></a></li>
-                        <li><a href="#"><i class="icon-dribbble"></i></a></li>
-                    </ul>
+                        <ul class="gtco-social-icons pull-right">
+                            <li><a href="#"><i class="icon-twitter"></i></a></li>
+                            <li><a href="#"><i class="icon-facebook"></i></a></li>
+                            <li><a href="#"><i class="icon-linkedin"></i></a></li>
+                            <li><a href="#"><i class="icon-dribbble"></i></a></li>
+                        </ul>
                     </p>
                 </div>
             </div>
@@ -683,6 +684,15 @@
 <script src="https://algorithmia.com/v1/clients/js/algorithmia-0.2.0.js"></script>
 <script src="js/felindex_adj.js"></script>
 <script src="js/attr_radio_factory.js"></script>
+
+<!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+<script type="text/javascript"> // charset="utf-8">
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    socket.on('connect', function() {
+//        socket.emit('my event', {data: 'I\'m connected!'});
+        
+    });
+</script>-->
 
 <script>
     function changeSize(target_elem, source_elem){

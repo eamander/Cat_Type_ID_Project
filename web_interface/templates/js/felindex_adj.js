@@ -9,6 +9,7 @@ var testCheck2;
 var testCheck3;
 
 
+
 // new construction
 var sketch = function(p){
   
@@ -18,10 +19,12 @@ var sketch = function(p){
 //        image_zone = p.select('#disp_img');  // The image element
         image_upload_button = p.select('#image_upload_button');
 //        image_link_zone = p.select('#img_url_input');
+        image_border = p.select('#disp_img_border');
 
 //        image_zone.drop(gotFile);
         image_upload_button.drop(gotFile);
 //        image_link_zone.drop(gotFile);
+        image_border.drop(gotFile);
 
         // image_zone:
     //    do any pre-processing to
@@ -67,6 +70,20 @@ var sketch = function(p){
                       // Then change the labels:
                       changeLabels(imageLabels);
                   });
+            // Re-write the function to work with SocketIO
+//            socket.emit("algo", JSON.stringify(input), function(output) {
+////                    testCheck1 = JSON.parse(output);
+////                    radarInputData = make_all_data(output.data[0]);
+////                    testCheck2 = radarInputData;
+////                    imageLabels = output.labels[0];
+////                    testCheck3 = imageLabels;
+////                    drawCharts(radarInputData);
+////                    changeLabels(imageLabels);
+//                    // Before getting in to this, I just want to know that
+//                    // I can get a proper response.
+//                    console.log(output);
+//                }
+//            );
         };
         
         img_data = p.loadImage(file.data, loadPixCallback);

@@ -182,7 +182,11 @@ class CatData(FloatLayout):
         except AttributeError:
             return True
 
-        self.dismiss_popup()
+        try:
+            self.dismiss_popup()
+        except AttributeError:
+            pass
+
         return False  # This is so that I can grey out the save button if necessary
 
     def new(self):

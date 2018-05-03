@@ -374,3 +374,12 @@ def rebase_filesystem(df, str1, str2, sep1='\\', sep2='\\', col='file_name', inp
     df[col] = df[col].apply(os.path.normpath)
 
     return df
+
+
+def key_cleaner(df, key_values):
+    comparators = [df[key] != value for key, value in key_values.items()]
+    return df[(sum(comparators)).apply(bool)]
+
+
+
+
